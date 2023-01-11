@@ -1,17 +1,3 @@
-/*=================================================*/
-/*                                                 */
-/*              Written By Zooky.                  */
-/*                                                 */
-/*             Discord: Zooky.#1003                */
-/*              Telegram: @zookyy                  */
-/*                                                 */
-/*          Website: https://www.eryx.io           */
-/*                                                 */
-/*  If you wish to purchase the premium version    */
-/*       please visit the github link above.       */
-/*                                                 */
-/*=================================================*/
-
 const fs = require('fs');
 
 class Cache {

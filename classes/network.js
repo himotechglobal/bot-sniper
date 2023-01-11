@@ -1,17 +1,3 @@
-/*=================================================*/
-/*                                                 */
-/*              Written By Zooky.                  */
-/*                                                 */
-/*             Discord: Zooky.#1003                */
-/*              Telegram: @zookyy                  */
-/*                                                 */
-/*          Website: https://www.eryx.io           */
-/*                                                 */
-/*  If you wish to purchase the premium version    */
-/*       please visit the github link above.       */
-/*                                                 */
-/*=================================================*/
-
 const chalk = require('chalk');
 const ethers = require('ethers');
 
@@ -132,7 +118,7 @@ class Network {
 
 		} catch(e) {
 
-			msg.error(`[error] ${e}`);
+			msg.error(`[error] ddd ${e}`);
 
 			process.exit();
 
@@ -172,8 +158,8 @@ class Network {
 	async swapFromTokenToToken(amountIn, amountOutMin, contracts) {
 
 	    try {
-
-	    	return this.router.swapExactETHForTokensSupportingFeeOnTransferTokens(
+			if(this.isETH(config.cfg.contracts.input)){
+	    	return await this.router.swapExactETHForTokensSupportingFeeOnTransferTokens(
                 amountOutMin,
                 contracts,
                 this.account.address,
@@ -185,31 +171,113 @@ class Network {
                     'nonce': (this.getNonce())
                 }
             );
-
+			}
+			else if(this.isETH(config.cfg.contracts.output)){
+				{
+					console.log("TOken for Eth")
+				return await this.router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+					amountIn,
+					amountOutMin,
+					contracts,
+					this.account.address,
+					(Date.now() + 1000 * 60 * 10),
+					{
+					 
+						'gasLimit': config.cfg.transaction.gas_limit,
+						'gasPrice': config.cfg.transaction.gas_price,
+						'nonce': (this.getNonce())
+					}
+				);
+			}
+		}
+		else {
+			return await this.router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+				amountIn,
+				amountOutMin,
+				contracts,
+				this.account.address,
+				(Date.now() + 1000 * 60 * 10),
+				{
+				 
+					'gasLimit': config.cfg.transaction.gas_limit,
+					'gasPrice': config.cfg.transaction.gas_price,
+					'nonce': (this.getNonce())
+				}
+			);
+		}
 	    } catch(e) {
 
-	        console.log(`[error] ${e.error}`);
+	        console.log(`[error] hdvv ${e.error}`);
 	        process.exit();
 
 	    }
 	}
 
 	async estimateTransaction(amountIn, amountOutMin, contracts) {
-
+		let gas = 0 ;
 	    try {
 
-	    	let gas = await this.router.estimateGas.swapExactETHForTokensSupportingFeeOnTransferTokens(
-                amountOutMin,
-                contracts,
-                this.account.address,
-                (Date.now() + 1000 * 60 * 10),
-                {
-                	'value': amountIn,
-                    'gasLimit': config.cfg.transaction.gas_limit,
-                    'gasPrice': config.cfg.transaction.gas_price
-                }
-            );
+			if(this.isETH(config.cfg.contracts.input)){
+				gas =  await this.router.estimateGas.swapExactETHForTokensSupportingFeeOnTransferTokens(
+					amountOutMin,
+					contracts,
+					this.account.address,
+					(Date.now() + 1000 * 60 * 10),
+					{
+						'value': amountIn,
+						'gasLimit': config.cfg.transaction.gas_limit,
+						'gasPrice': config.cfg.transaction.gas_price,
+						'nonce': (this.getNonce())
+					}
+				);
+				}
+				else if(this.isETH(config.cfg.contracts.output)){
+					{
+						console.log("TOken for Eth"+contracts)
+					gas =  await this.router.estimateGas.swapExactTokensForETHSupportingFeeOnTransferTokens(
+						amountIn,
+						amountOutMin,
+						contracts,
+						this.account.address,
+						(Date.now() + 1000 * 60 * 10),
+						{
+						 
+							'gasLimit': config.cfg.transaction.gas_limit,
+							'gasPrice': config.cfg.transaction.gas_price,
+							'nonce': (this.getNonce())
+						}
+					);
+				}
+			}
+			else {
+				gas = await this.router.estimateGas.swapExactTokensForTokensSupportingFeeOnTransferTokens(
+					amountIn,
+					amountOutMin,
+					contracts,
+					this.account.address,
+					(Date.now() + 1000 * 60 * 10),
+					{
+					 
+						'gasLimit': config.cfg.transaction.gas_limit,
+						'gasPrice': config.cfg.transaction.gas_price,
+						'nonce': (this.getNonce())
+					}
+				);
+			}
 
+	    	// let gas = await this.router.estimateGas.swapExactETHForTokensSupportingFeeOnTransferTokens(
+            //     amountOutMin,
+            //     contracts,
+            //     this.account.address,
+            //     (Date.now() + 1000 * 60 * 10),
+            //     {
+            //     	'value': amountIn,
+            //         'gasLimit': config.cfg.transaction.gas_limit,
+            //         'gasPrice': config.cfg.transaction.gas_price
+            //     }
+            // );
+			console.log("Gas:"+config.cfg.transaction.gas_price);
+			console.log("Gas:"+gas);
 	        // check if is using enough gas.
 	        if(gas > parseInt(config.cfg.transaction.gas_limit) || gas > parseInt(config.cfg.transaction.gas_limit)) {
 	            msg.error(`[error] The transaction requires at least ${gas} gas, your limit is ${config.cfg.transaction.gas_limit}.`);
@@ -220,10 +288,57 @@ class Network {
 
 	    } catch(e) {
 
-	        console.log(`[error] ${e.error}`);
+	        console.log(`[error] bdjbdj ${e}`);
 	        return this.estimateTransaction(amountIn, amountOutMin, contracts);
 
 	    }
+	}
+
+	async approveToken(_amountIn){
+	    try {
+			
+
+		let _allowance = await this.contract_in.allowance(this.account.address,this.chains[this.network.chainId].router) ; 
+
+		if(_allowance < _amountIn){
+			let tx = await this.contract_in.approve(
+				this.chains[this.network.chainId].router,
+				'100000000000000000000000000000000000000000000000000000',
+				{				 
+					'gasLimit': config.cfg.transaction.gas_limit,
+					'gasPrice': config.cfg.transaction.gas_price,
+					'nonce': (this.getNonce())
+				}
+			);
+	
+			msg.success(`TX has been submitted. Waiting for response..\n`);
+	
+			let receipt = await tx.wait();
+			this.config.cfg.transaction.gas_price = this.config.cfg.transaction.gas_price + this.config.cfg.transaction.gas_price*0.1
+			this.nonce_offset++ ; 
+		
+			return receipt ; 
+		}
+		else{
+			return true ; 
+
+		}
+
+
+		
+		
+	} catch(err) {
+
+		if(err.error && err.error.message){
+			msg.error(`[error] dddd ${err}`);
+		}
+		else
+			console.log(err);
+
+		return this.approveToken();
+	}
+
+	return null;
 	}
 
 	async transactToken(from, to) {
@@ -231,13 +346,15 @@ class Network {
 	    try {
 
 	        let inputTokenAmount = config.cfg.transaction.amount_in_formatted;
-
+			console.log("input amount: "+ inputTokenAmount)
 	        // get output amounts
 	        let amounts = await this.router.getAmountsOut(inputTokenAmount, [from, to]);
 
 	         // calculate min output with current slippage in bnb
 	        let amountOutMin = amounts[1].sub(amounts[1].div(100).mul(config.cfg.transaction.buy_slippage));
-
+	        // let amountOutMin = 0;
+			console.log(amounts) 
+			console.log(amountOutMin) 
 	      	// simulate transaction to verify outputs.
 	        let estimationPassed = await this.estimateTransaction(inputTokenAmount, amountOutMin, [from, to]);
 
@@ -247,7 +364,7 @@ class Network {
 	        } else {
 	            msg.error(`[error] Estimation did not pass checks. exiting..`);
 	            process.exit();
-	        }
+	        } 
 
 	        let tx = await this.swapFromTokenToToken(
 	            inputTokenAmount, 
@@ -269,7 +386,7 @@ class Network {
 	    } catch(err) {
 
 	        if(err.error && err.error.message){
-	            msg.error(`[error] ${err.error.message}`);
+	            msg.error(`[error] dddd ${err}`);
 	        }
 	        else
 	            console.log(err);
@@ -287,7 +404,11 @@ class Network {
 	async getLiquidity(pair) {
 
 	    const bnbValue = await this.contract_in.balanceOf(pair);
-	    const formattedbnbValue = await ethers.utils.formatEther(bnbValue);
+		console.log(bnbValue)
+	    // const formattedbnbValue = await ethers.utils.formatEther(bnbValue);
+		const decimals  = await this.contract_in.decimals()
+		const formattedbnbValue  = bnbValue/1e1**decimals ; 
+		console.log(formattedbnbValue)
 
 	    // testing
 	    if (formattedbnbValue < 1) {
@@ -300,9 +421,10 @@ class Network {
 
 	async getPair(contract_in, contract_out) {
 
+		console.log(contract_in, contract_out)
 	    // get pair address
 	    let pairAddress = await this.factory.getPair(contract_in, contract_out);
-
+		
 	    // no pair found, re-launch
 	    if (!pairAddress || (pairAddress.toString().indexOf('0x0000000000000') > -1)) {
 	        msg.warning("Could not find pair for specified contracts. retrying..");
@@ -316,7 +438,7 @@ class Network {
 
 		let nonce = (this.base_nonce + this.nonce_offset);
 
-		this.nonce_offset ++;
+		this.nonce_offset++;
 
 		return nonce;
 

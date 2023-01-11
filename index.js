@@ -1,17 +1,3 @@
-/*=================================================*/
-/*                                                 */
-/*              Written By Zooky.                  */
-/*                                                 */
-/*             Discord: Zooky.#1003                */
-/*              Telegram: @zookyy                  */
-/*                                                 */
-/*          Website: https://www.eryx.io           */
-/*                                                 */
-/*  If you wish to purchase the premium version    */
-/*       please visit the github link above.       */
-/*                                                 */
-/*=================================================*/
-
 const chalk = require('chalk');
 const ethers = require('ethers');
 const fs = require('fs').promises;
@@ -49,33 +35,19 @@ process.on('uncaughtException', (err, origin) => {
     // prepare network for transactions
     await network.prepare();
 
-    if(!network.isETH(config.cfg.contracts.input)) {
-        msg.error(`[error] The free version of the bot can only use the BNB pair.`);
-        process.exit();
-    }
+    // if(!network.isETH(config.cfg.contracts.gastoken)) {
+    //     msg.error(`[error] The free version of the bot can only use the BNB pair.`);
+    //     process.exit();
+    // }
 
     // print debug info
     console.clear();
 
-    ConsoleLog(`/*=================================================*/
-/*                                                 */
-/*              Written By Zooky.                  */
-/*                                                 */
-/*             Discord: Zooky.#1003                */
-/*              Telegram: @zookyy                  */
-/*                                                 */
-/*          Website: https://www.eryx.io           */
-/*                                                 */
-/*  If you wish to purchase the premium version    */
-/*       please visit the github link above.       */
-/*                                                 */
-/*=================================================*/\n\n`);
-
-    msg.primary('Eryx Lite has been started.');
+    msg.primary('Snipe Bot has been started.');
 
 	// balance check
     if(network.bnb_balance == 0) {
-    	msg.error(`[error] You don't have any BNB in your account. (used for gas fee)`);
+    	msg.error(`[error] You don't have any Gas token in your account. (used for gas fee)`);
         process.exit();
     }
 
@@ -86,7 +58,7 @@ process.on('uncaughtException', (err, origin) => {
     }
 
     // fetch pair
-    let pair = await network.getPair(config.cfg.contracts.input, config.cfg.contracts.output);
+    let pair = await network.getPair(config.cfg.contracts.tokena, config.cfg.contracts.tokenb);
 
     msg.primary("Pair address: " + JSON.stringify(pair) + ".");
 
@@ -97,7 +69,14 @@ process.on('uncaughtException', (err, origin) => {
 
     // get starting tick
     let startingTick = Math.floor(new Date().getTime() / 1000);
-    
+ 
+    let approve = await network.approveToken(config.cfg.transaction.amount_in_formatted);
+
+
+    if(approve == null) {
+        msg.error('[error] Could not retrieve receipt from approve tx.');
+        process.exit();
+    }
     //purchase token [bnb -> token (through bnb)]
     let receipt = await network.transactToken(
         config.cfg.contracts.input, 

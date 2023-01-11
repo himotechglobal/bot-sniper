@@ -1,17 +1,3 @@
-/*=================================================*/
-/*                                                 */
-/*              Written By Zooky.                  */
-/*                                                 */
-/*             Discord: Zooky.#1003                */
-/*              Telegram: @zookyy                  */
-/*                                                 */
-/*          Website: https://www.eryx.io           */
-/*                                                 */
-/*  If you wish to purchase the premium version    */
-/*       please visit the github link above.       */
-/*                                                 */
-/*=================================================*/
-
 const ethers = require('ethers');
 const fs = require('fs');
 const cache = require('./cache.js');
@@ -25,16 +11,17 @@ class Config {
         if(!(fs.existsSync(_name))) {
             await fs.writeFileSync(_name, '');
         }
-
-        this.cfg = this.parseConfig((await fs.readFileSync(_name)).toString());
+         this.cfg = this.parseConfig((await fs.readFileSync(_name)).toString());
 
         // redefine inputs to real address instead of name.
         this.cfg.contracts.input = this.getContractAddressByName(this.cfg.contracts.input);
         this.cfg.contracts.output = this.getContractAddressByName(this.cfg.contracts.output);
+        this.cfg.contracts.tokena = this.getContractAddressByName(this.cfg.contracts.tokena);
+        this.cfg.contracts.tokenb = this.getContractAddressByName(this.cfg.contracts.tokenb);
 
         this.cfg.transaction.gas_price = ethers.utils.parseUnits(`${this.cfg.transaction.gas_price}`, 'gwei');
     }
-
+ 
 	parseConfig(str){
 	    let object = {};
 	    let lines = str.split('\n');
@@ -68,8 +55,10 @@ class Config {
 	    } else if(_name.toLowerCase() == 'busd') {
 	        return '0xe9e7cea3dedca5984780bafc599bd69add087d56';
 	    } else if(_name.toLowerCase() == 'sfm') {
-	    	return '0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3';
-	    }
+	    	return '0x8076c74c5e3f5852037f31ff0093eeb8c8add8d3';	    
+		} else if(_name.toLowerCase() == 'token') {
+		return '0xf78776213198eE241B7D59E82D9Fa5dd3cb3fdd3';
+		}
 
 	    // no address specified, fail with error
 	    if(!_name.startsWith('0x')) {
